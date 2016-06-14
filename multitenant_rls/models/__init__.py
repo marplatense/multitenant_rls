@@ -1,11 +1,10 @@
-from sqlalchemy import engine_from_config
-from sqlalchemy.orm import sessionmaker
+from pyramid_sqlalchemy import Session, metadata
+from sqlalchemy import engine_from_config, event, DDL, Table
 from sqlalchemy.orm import configure_mappers
-import zope.sqlalchemy
 
 # import or define all models here to ensure they are attached to the
 # Base.metadata prior to any initialization routines
-from .mymodel import MyModel # flake8: noqa
+from .mymodel import Product, City, User, Price # flake8: noqa
 
 # run configure_mappers after defining all of the models to ensure
 # all relationships can be setup
@@ -16,39 +15,6 @@ def get_engine(settings, prefix='sqlalchemy.'):
     return engine_from_config(settings, prefix)
 
 
-def get_session_factory(engine):
-    factory = sessionmaker()
-    factory.configure(bind=engine)
-    return factory
-
-
-def get_tm_session(session_factory, transaction_manager):
-    """
-    Get a ``sqlalchemy.orm.Session`` instance backed by a transaction.
-
-    This function will hook the session to the transaction manager which
-    will take care of committing any changes.
-
-    - When using pyramid_tm it will automatically be committed or aborted
-      depending on whether an exception is raised.
-
-    - When using scripts you should wrap the session in a manager yourself.
-      For example::
-
-          import transaction
-
-          engine = get_engine(settings)
-          session_factory = get_session_factory(engine)
-          with transaction.manager:
-              dbsession = get_tm_session(session_factory, transaction.manager)
-
-    """
-    dbsession = session_factory()
-    zope.sqlalchemy.register(
-        dbsession, transaction_manager=transaction_manager)
-    return dbsession
-
-
 def includeme(config):
     """
     Initialize the model for a Pyramid app.
@@ -57,17 +23,21 @@ def includeme(config):
 
     """
     settings = config.get_settings()
+    engine = engine_from_config(settings)
+    Session.configure(bind=engine)
 
     # use pyramid_tm to hook the transaction lifecycle to the request
     config.include('pyramid_tm')
 
-    session_factory = get_session_factory(get_engine(settings))
-    config.registry['dbsession_factory'] = session_factory
+enable_rls_str = "alter table %(table)s enable row level security"
+"""Activate RLS for the given table"""
 
-    # make request.dbsession available for use in Pyramid
-    config.add_request_method(
-        # r.tm is the transaction manager used by pyramid_tm
-        lambda r: get_tm_session(session_factory, r.tm),
-        'dbsession',
-        reify=True
-    )
+tenancy_policy_str = "create policy %(table)s_tenancy_policy on %(table)s for all " \
+                     "using (city_id=current_setting('my.city_id')::integer) " \
+                     "with check (city_id=current_setting('my.city_id')::integer)"
+"""Create the city constraint policy for the given table"""
+
+event.listen(Price.__table__, 'after_create', DDL(enable_rls_str))
+event.listen(Price.__table__, 'after_create', DDL(tenancy_policy_str))
+"""In case you want to apply the policy to more than one table, the keyword Table can be used instead naming each table
+separately."""

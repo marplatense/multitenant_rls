@@ -1,5 +1,4 @@
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.schema import MetaData
+from pyramid_sqlalchemy import metadata, BaseObject
 
 # Recommended naming convention used by Alembic, as various different database
 # providers will autogenerate vastly different names making migrations more
@@ -12,5 +11,5 @@ NAMING_CONVENTION = {
     "pk": "pk_%(table_name)s"
 }
 
-metadata = MetaData(naming_convention=NAMING_CONVENTION)
-Base = declarative_base(metadata=metadata)
+metadata.naming_convention = NAMING_CONVENTION
+Base = BaseObject
