@@ -12,7 +12,7 @@ from pyramid.scripts.common import parse_vars
 from sqlalchemy import engine_from_config
 
 from ..models.meta import Base
-from ..models import Product, City, User
+from ..models import Product, City, User, Price
 
 
 def usage(argv):
@@ -59,11 +59,13 @@ def main(argv=sys.argv):
                     Product(id=1138, name='Spaceship'), Product(id=2031, name='Caps Fridge'),
                     Product(id=2150, name='West City Taxi'), Product(id=2402, name='Great Saiyaman Watch'),
                     ]
-        cities = [City(name='Ginger Town'), City(name='Central City'), City(name='North City'),
-                  City(name='Jingle Village'), City(name='East City'), City(name='West City'),
+        cities = [City(name='Central City'), City(name='North City'),
+                  City(name='East City'), City(name='West City'),
                   City(name='Orange Star City'), City(name='South City')]
         users = []
-        for city in cities:
+        prices = []
+        for counter, city in enumerate(cities, start=1):
             users.append(User(username='{}_user@example.com'.format(city.name.lower().split()[0]),
                               city=city))
-        Session.add_all(products + cities + users)
+            prices.append(Price(city=city, product=products[0], value=counter*10))
+        Session.add_all(products + cities + users + prices)
