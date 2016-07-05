@@ -65,7 +65,7 @@ def main(argv=sys.argv):
         users = []
         prices = []
         for counter, city in enumerate(cities, start=1):
-            users.append(User(username='{}_user@example.com'.format(city.name.lower().split()[0]),
+            users.append(User(id='{}_user@example.com'.format(city.name.lower().split()[0]),
                               city=city))
             prices.append(Price(city=city, product=products[0], value=counter*10))
         Session.add_all(products + cities + users + prices)

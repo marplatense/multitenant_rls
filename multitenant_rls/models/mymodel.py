@@ -6,7 +6,6 @@ from sqlalchemy import (
     String,
     Column,
     ForeignKey,
-    Numeric
 )
 from sqlalchemy.orm import relationship
 
@@ -52,22 +51,20 @@ class CitySchema(colander.MappingSchema):
 
 class User(Base, JSONify):
     __tablename__ = "users"
-    id = Column(Integer, primary_key=True)
-    username = Column(String, unique=True, index=True)
+    id = Column(String, primary_key=True)
 
     @classmethod
     def login(cls, username, password):
-        user = Session.query(cls).filter(cls.username == username).first()
+        user = Session.query(cls).get(username)
         return user
 
 
 class UserSchema(colander.MappingSchema):
-    id = colander.SchemaNode(colander.Integer(), location='body', type='int', missing=colander.drop)
-    username = colander.SchemaNode(colander.String(), location='body', type='str', validator=colander.Email)
+    id = colander.SchemaNode(colander.String(), location='body', type='str', validator=colander.Email)
 
 
 city_users = Table('city_users', Base.metadata,
-                   Column('user_id', Integer, ForeignKey('users.id'), unique=True, index=True),
+                   Column('user_id', String, ForeignKey('users.id'), unique=True, index=True),
                    Column('city_id', Integer, ForeignKey('cities.id'), nullable=False, index=True))
 
 
@@ -76,7 +73,7 @@ class Price(Base, JSONify):
     id = Column(Integer, primary_key=True)
     product_id = Column(Integer, ForeignKey('products.id'), nullable=False, index=True)
     city_id = Column(Integer, ForeignKey('cities.id'), nullable=False, index=True)
-    value = Column(Numeric, nullable=False, default=0)
+    value = Column(Integer, nullable=False, default=0)
 
     product = relationship(Product)
     city = relationship(City)
@@ -86,7 +83,7 @@ class PriceSchema(colander.MappingSchema):
     id = colander.SchemaNode(colander.Integer(), location='body', type='int', missing=colander.drop)
     product_id = colander.SchemaNode(colander.Integer(), location='body', type='int')
     city_id = colander.SchemaNode(colander.Integer(), location='body', type='int')
-    value = colander.SchemaNode(colander.Decimal(), location='body', type='int', missing=colander.Range(min=1))
+    value = colander.SchemaNode(colander.Integer(), location='body', type='int', missing=colander.Range(min=1))
 
 
 City.users = relationship(User, secondary=city_users)

@@ -1,5 +1,5 @@
-from pyramid_sqlalchemy import Session, metadata
-from sqlalchemy import engine_from_config, event, DDL, Table
+from pyramid_sqlalchemy import Session
+from sqlalchemy import engine_from_config, event, DDL
 from sqlalchemy.orm import configure_mappers
 
 # import or define all models here to ensure they are attached to the

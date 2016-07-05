@@ -1,6 +1,6 @@
-from pyramid.security import Allow, Authenticated, ALL_PERMISSIONS
-#from sqlalchemy import func, cast, String
-#from sqlalchemy.orm import object_session
+from pyramid.security import Allow, Authenticated, ALL_PERMISSIONS, unauthenticated_userid
+from pyramid_sqlalchemy import Session
+
 from .models import User
 
 
@@ -12,6 +12,12 @@ def check(username, password, request):
     """
     user = User.login(username=username, password=password)
     if user is not None:
-        #res = object_session(user).query(func.set_config('my.city_id', str(user.city.id), True)).one()
         return [(Allow, Authenticated, ALL_PERMISSIONS)]
     return user
+
+
+def get_user(request):
+    userid = unauthenticated_userid(request)
+    if userid is not None:
+        return Session.query(User).get(userid)
+
